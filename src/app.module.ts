@@ -8,11 +8,14 @@ import { ShiftsModule } from './shifts/shifts.module';
 import { CustomersModule } from './customers/customers.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { CouponsModule } from './coupons/coupons.module';
+
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     SupabaseModule,
+    CouponsModule,
     AuthModule,
     OrdersModule,
     ServicesModule,
