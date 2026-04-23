@@ -20,4 +20,9 @@ export class CustomersController {
       body.phone,
     );
   }
+  @Get()
+async getAll(@Request() req: any) {
+  return this.customersService.getAll(req.user.tenant_id);
+}
+
 }

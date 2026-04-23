@@ -59,4 +59,18 @@ export class CustomersService {
       vehicle_id: newVehicle.id,
     }
   }
+
+  async getAll(tenant_id: string) {
+  const { data } = await this.supabase
+    .from('vehicles')
+    .select('*, customers(*)')
+    .eq('tenant_id', tenant_id)
+  
+  return (data || []).map((v: any) => ({
+    plate: v.plate,
+    vehicle: { id: v.id, plate: v.plate, type: v.type },
+    customer: v.customers,
+  }))
+}
+
 }
