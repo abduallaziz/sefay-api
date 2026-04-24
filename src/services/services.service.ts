@@ -110,13 +110,20 @@ export class ServicesService {
   }
 
   async hardDeleteService(user: any, id: string) {
-    const { error } = await this.supabase
-      .from('services')
-      .delete()
-      .eq('id', id)
-      .eq('tenant_id', user.tenant_id)
+  // أولاً نحذف service_id من order_items
+  await this.supabase
+    .from('order_items')
+    .update({ service_id: null })
+    .eq('service_id', id)
 
-    if (error) throw new BadRequestException(error.message)
-    return { message: 'تم الحذف النهائي' }
-  }
+  // ثم نحذف الخدمة
+  const { error } = await this.supabase
+    .from('services')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', user.tenant_id)
+
+  if (error) throw new BadRequestException(error.message)
+  return { message: 'تم الحذف النهائي' }
+}
 }
