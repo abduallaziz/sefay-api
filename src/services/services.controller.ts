@@ -12,6 +12,11 @@ export class ServicesController {
     return this.servicesService.getServices(req.user);
   }
 
+  @Get('all')
+  async getAllServices(@Request() req: any) {
+    return this.servicesService.getAllServices(req.user);
+  }
+
   @Post()
   async createService(@Request() req: any, @Body() body: any) {
     return this.servicesService.createService(req.user, body);
@@ -25,5 +30,10 @@ export class ServicesController {
   @Delete(':id')
   async deleteService(@Request() req: any, @Param('id') id: string) {
     return this.servicesService.deleteService(req.user, id);
+  }
+
+  @Delete(':id/hard')
+  async hardDeleteService(@Request() req: any, @Param('id') id: string) {
+    return this.servicesService.hardDeleteService(req.user, id);
   }
 }
