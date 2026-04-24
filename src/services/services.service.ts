@@ -8,16 +8,30 @@ export class ServicesService {
     @Inject(SUPABASE_CLIENT) private supabase: SupabaseClient,
   ) {}
 
-  async getAllServices(user: any) {
-  const { data, error } = await this.supabase
-    .from('services')
-    .select('*')
-    .eq('tenant_id', user.tenant_id)
-    .order('category', { ascending: true })
+  // جلب الخدمات المفعّلة فقط (للـ POS)
+  async getServices(user: any) {
+    const { data, error } = await this.supabase
+      .from('services')
+      .select('*')
+      .eq('tenant_id', user.tenant_id)
+      .eq('active', true)
+      .order('category', { ascending: true })
 
-  if (error) throw new BadRequestException(error.message)
-  return data
-}
+    if (error) throw new BadRequestException(error.message)
+    return data
+  }
+
+  // جلب كل الخدمات (للإدارة)
+  async getAllServices(user: any) {
+    const { data, error } = await this.supabase
+      .from('services')
+      .select('*')
+      .eq('tenant_id', user.tenant_id)
+      .order('category', { ascending: true })
+
+    if (error) throw new BadRequestException(error.message)
+    return data
+  }
 
   async createService(user: any, body: {
     name: string;
@@ -38,9 +52,9 @@ export class ServicesService {
         active: true,
       })
       .select()
-      .single();
+      .single()
 
-    if (error) throw new BadRequestException(error.message);
+    if (error) throw new BadRequestException(error.message)
 
     await this.supabase.from('audit_logs').insert({
       tenant_id: user.tenant_id,
@@ -49,9 +63,9 @@ export class ServicesService {
       entity: 'services',
       entity_id: data.id,
       details: { name: body.name, price: body.price },
-    });
+    })
 
-    return data;
+    return data
   }
 
   async updateService(user: any, id: string, body: {
@@ -68,9 +82,9 @@ export class ServicesService {
       .eq('id', id)
       .eq('tenant_id', user.tenant_id)
       .select()
-      .single();
+      .single()
 
-    if (error) throw new BadRequestException(error.message);
+    if (error) throw new BadRequestException(error.message)
 
     await this.supabase.from('audit_logs').insert({
       tenant_id: user.tenant_id,
@@ -79,44 +93,30 @@ export class ServicesService {
       entity: 'services',
       entity_id: id,
       details: body,
-    });
+    })
 
-    return data;
+    return data
   }
 
-  async getAllServices(user: any) {
-  const { data, error } = await this.supabase
-    .from('services')
-    .select('*')
-    .eq('tenant_id', user.tenant_id)
-    .order('category', { ascending: true })
-
-  if (error) throw new BadRequestException(error.message)
-  return data
-}
-
-
-
   async deleteService(user: any, id: string) {
-  const { error } = await this.supabase
-    .from('services')
-    .update({ active: false })
-    .eq('id', id)
-    .eq('tenant_id', user.tenant_id)
+    const { error } = await this.supabase
+      .from('services')
+      .update({ active: false })
+      .eq('id', id)
+      .eq('tenant_id', user.tenant_id)
 
-  if (error) throw new BadRequestException(error.message)
-  return { message: 'تم تعطيل الخدمة' }
-}
+    if (error) throw new BadRequestException(error.message)
+    return { message: 'تم تعطيل الخدمة' }
+  }
 
-async hardDeleteService(user: any, id: string) {
-  const { error } = await this.supabase
-    .from('services')
-    .delete()
-    .eq('id', id)
-    .eq('tenant_id', user.tenant_id)
+  async hardDeleteService(user: any, id: string) {
+    const { error } = await this.supabase
+      .from('services')
+      .delete()
+      .eq('id', id)
+      .eq('tenant_id', user.tenant_id)
 
-  if (error) throw new BadRequestException(error.message)
-  return { message: 'تم الحذف النهائي' }
-}
-
+    if (error) throw new BadRequestException(error.message)
+    return { message: 'تم الحذف النهائي' }
+  }
 }
