@@ -34,39 +34,33 @@ export class ServicesService {
   }
 
   async createService(user: any, body: {
-    name: string;
-    price: number;
-    category?: string;
-    icon?: string;
-    color?: string;
-  }) {
-    const { data, error } = await this.supabase
-      .from('services')
-      .insert({
-        tenant_id: user.tenant_id,
-        name: body.name,
-        price: body.price,
-        category: body.category || null,
-        icon: body.icon || null,
-        color: body.color || null,
-        active: true,
-      })
-      .select()
-      .single()
-
-    if (error) throw new BadRequestException(error.message)
-
-    await this.supabase.from('audit_logs').insert({
+  name: string;
+  price: number;
+  category?: string;
+  icon?: string;
+  color?: string;
+  type?: string;
+  bundle_items?: any[];
+}) {
+  const { data, error } = await this.supabase
+    .from('services')
+    .insert({
       tenant_id: user.tenant_id,
-      user_id: user.id,
-      action: 'create_service',
-      entity: 'services',
-      entity_id: data.id,
-      details: { name: body.name, price: body.price },
+      name: body.name,
+      price: body.price,
+      category: body.category || null,
+      icon: body.icon || null,
+      color: body.color || null,
+      active: true,
+      type: body.type || 'single',
+      bundle_items: body.bundle_items || [],
     })
+    .select()
+    .single()
 
-    return data
-  }
+  if (error) throw new BadRequestException(error.message)
+  return data
+}
 
   async updateService(user: any, id: string, body: {
     name?: string;
