@@ -91,13 +91,13 @@ export class OrdersService {
 
   async getDailySummary(user: any, date: string) {
     const { data: orders, error } = await this.supabase
-  .from('orders')
-  .select('*')
-  .eq('tenant_id', user.tenant_id)
-  .eq('branch_id', user.branch_id)
-  .eq('status', 'completed')
-  .gte('created_at', `${date}T00:00:00+03:00`)
-  .lte('created_at', `${date}T23:59:59+03:00`)
+      .from('orders')
+      .select('*')
+      .eq('tenant_id', user.tenant_id)
+      .eq('branch_id', user.branch_id)
+      .eq('status', 'completed')
+      .gte('created_at', `${date}T00:00:00`)
+      .lte('created_at', `${date}T23:59:59`);
 
     if (error) throw new BadRequestException(error.message);
 
