@@ -23,7 +23,8 @@ export class OrdersService {
 
     const subtotal = body.items.reduce((sum, item) => sum + item.price * item.qty, 0);
     const discount = body.discount || 0;
-    const tax = (subtotal - discount) * 0.15;
+    const taxRate = (body as any).tax_rate ?? 15;
+    const tax = (subtotal - discount) * (taxRate / 100);
     const total = subtotal - discount + tax;
 
     const { data: order, error } = await this.supabase
