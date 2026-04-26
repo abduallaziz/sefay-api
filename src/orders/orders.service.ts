@@ -2,6 +2,15 @@ import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { SUPABASE_CLIENT } from '../supabase/supabase.module';
 import { SupabaseClient } from '@supabase/supabase-js';
 
+function groupByDay(orders: any[]) {
+  const map: Record<string, number> = {}
+  orders.forEach(o => {
+    const day = new Date(o.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' })
+    map[day] = (map[day] || 0) + Number(o.total)
+  })
+  return Object.entries(map).map(([date, total]) => ({ date, total }))
+}
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -80,13 +89,48 @@ export class OrdersService {
       .order('created_at', { ascending: false });
 
     if (date) {
-  // تحويل التاريخ لـ timezone السعودية
-  query = query.gte('created_at', `${date}T00:00:00+03:00`)
-               .lte('created_at', `${date}T23:59:59+03:00`)
-}
+      query = query.gte('created_at', `${date}T00:00:00+03:00`)
+                   .lte('created_at', `${date}T23:59:59+03:00`)
+    }
+
     const { data, error } = await query;
     if (error) throw new BadRequestException(error.message);
     return data;
+  }
+
+  async getOrdersByRange(user: any, from: string, to: string) {
+    const { data, error } = await this.supabase
+      .from('orders')
+      .select('*, order_items(*)')
+      .eq('tenant_id', user.tenant_id)
+      .gte('created_at', `${from}T00:00:00+03:00`)
+      .lte('created_at', `${to}T23:59:59+03:00`)
+      .order('created_at', { ascending: true })
+
+    if (error) throw new BadRequestException(error.message)
+    return data
+  }
+
+  async getSummaryByRange(user: any, from: string, to: string) {
+    const { data: orders, error } = await this.supabase
+      .from('orders')
+      .select('*')
+      .eq('tenant_id', user.tenant_id)
+      .eq('status', 'completed')
+      .gte('created_at', `${from}T00:00:00+03:00`)
+      .lte('created_at', `${to}T23:59:59+03:00`)
+
+    if (error) throw new BadRequestException(error.message)
+
+    return {
+      total_orders:   orders.length,
+      total_sales:    orders.reduce((s, o) => s + Number(o.total), 0),
+      total_tax:      orders.reduce((s, o) => s + Number(o.tax), 0),
+      total_discount: orders.reduce((s, o) => s + Number(o.discount), 0),
+      cash:           orders.filter(o => o.payment_method === 'cash').reduce((s, o) => s + Number(o.total), 0),
+      card:           orders.filter(o => ['mada','visa','mastercard'].includes(o.payment_method)).reduce((s, o) => s + Number(o.total), 0),
+      orders_by_day:  groupByDay(orders),
+    }
   }
 
   async getDailySummary(user: any, date: string) {
@@ -96,21 +140,19 @@ export class OrdersService {
       .eq('tenant_id', user.tenant_id)
       .eq('branch_id', user.branch_id)
       .eq('status', 'completed')
-      .gte('created_at', `${date}T00:00:00`)
-      .lte('created_at', `${date}T23:59:59`);
+      .gte('created_at', `${date}T00:00:00+03:00`)
+      .lte('created_at', `${date}T23:59:59+03:00`);
 
     if (error) throw new BadRequestException(error.message);
 
-    const summary = {
+    return {
       date,
-      total_orders: orders.length,
-      total_sales: orders.reduce((s, o) => s + Number(o.total), 0),
-      total_tax: orders.reduce((s, o) => s + Number(o.tax), 0),
+      total_orders:   orders.length,
+      total_sales:    orders.reduce((s, o) => s + Number(o.total), 0),
+      total_tax:      orders.reduce((s, o) => s + Number(o.tax), 0),
       total_discount: orders.reduce((s, o) => s + Number(o.discount), 0),
-      cash: orders.filter(o => o.payment_method === 'cash').reduce((s, o) => s + Number(o.total), 0),
-      card: orders.filter(o => o.payment_method === 'card').reduce((s, o) => s + Number(o.total), 0),
+      cash:           orders.filter(o => o.payment_method === 'cash').reduce((s, o) => s + Number(o.total), 0),
+      card:           orders.filter(o => ['mada','visa','mastercard'].includes(o.payment_method)).reduce((s, o) => s + Number(o.total), 0),
     };
-
-    return summary;
   }
 }

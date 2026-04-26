@@ -22,4 +22,22 @@ export class OrdersController {
     const today = date || new Date().toISOString().split('T')[0];
     return this.ordersService.getDailySummary(req.user, today);
   }
+
+  @Get('range')
+  async getOrdersByRange(
+    @Request() req: any,
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ) {
+    return this.ordersService.getOrdersByRange(req.user, from, to);
+  }
+
+  @Get('summary/range')
+  async getSummaryByRange(
+    @Request() req: any,
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ) {
+    return this.ordersService.getSummaryByRange(req.user, from, to);
+  }
 }
