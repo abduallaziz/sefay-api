@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { SUPABASE_CLIENT } from '../supabase/supabase.module';
 import { SupabaseClient } from '@supabase/supabase-js';
 
@@ -9,12 +9,62 @@ export class CouponsService {
   ) {}
 
   async getAll(tenant_id: string) {
-    const { data } = await this.supabase
+    const { data, error } = await this.supabase
       .from('coupons')
       .select('*')
       .eq('tenant_id', tenant_id)
-      .eq('active', true)
+      .order('created_at', { ascending: false })
+    if (error) throw new BadRequestException(error.message)
     return data || []
+  }
+
+  async create(tenant_id: string, body: {
+    code: string
+    type: 'percent' | 'fixed'
+    value: number
+    min_order?: number
+    max_uses?: number | null
+    expires_at?: string | null
+    active?: boolean
+  }) {
+    const { data, error } = await this.supabase
+      .from('coupons')
+      .insert({
+        tenant_id,
+        code: body.code.toUpperCase(),
+        type: body.type,
+        value: body.value,
+        min_order: body.min_order || 0,
+        max_uses: body.max_uses || null,
+        expires_at: body.expires_at || null,
+        active: body.active ?? true,
+        used_count: 0,
+      })
+      .select()
+      .single()
+    if (error) throw new BadRequestException(error.message)
+    return data
+  }
+
+  async update(id: string, tenant_id: string, body: any) {
+    const updateData: any = {}
+    if (body.code !== undefined)      updateData.code = body.code.toUpperCase()
+    if (body.type !== undefined)      updateData.type = body.type
+    if (body.value !== undefined)     updateData.value = body.value
+    if (body.min_order !== undefined) updateData.min_order = body.min_order
+    if (body.max_uses !== undefined)  updateData.max_uses = body.max_uses
+    if (body.expires_at !== undefined) updateData.expires_at = body.expires_at
+    if (body.active !== undefined)    updateData.active = body.active
+
+    const { data, error } = await this.supabase
+      .from('coupons')
+      .update(updateData)
+      .eq('id', id)
+      .eq('tenant_id', tenant_id)
+      .select()
+      .single()
+    if (error) throw new BadRequestException(error.message)
+    return data
   }
 
   async validate(code: string, tenant_id: string, subtotal: number) {
