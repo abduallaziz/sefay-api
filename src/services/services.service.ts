@@ -8,59 +8,61 @@ export class ServicesService {
     @Inject(SUPABASE_CLIENT) private supabase: SupabaseClient,
   ) {}
 
-  // جلب الخدمات المفعّلة فقط (للـ POS)
   async getServices(user: any) {
     const { data, error } = await this.supabase
       .from('services')
       .select('*')
       .eq('tenant_id', user.tenant_id)
       .eq('active', true)
-      .order('category', { ascending: true })
+      .order('category', { ascending: true });
 
-    if (error) throw new BadRequestException(error.message)
-    return data
+    if (error) throw new BadRequestException(error.message);
+    return data;
   }
 
-  // جلب كل الخدمات (للإدارة)
   async getAllServices(user: any) {
     const { data, error } = await this.supabase
       .from('services')
       .select('*')
       .eq('tenant_id', user.tenant_id)
-      .order('category', { ascending: true })
+      .order('category', { ascending: true });
 
-    if (error) throw new BadRequestException(error.message)
-    return data
+    if (error) throw new BadRequestException(error.message);
+    return data;
   }
 
   async createService(user: any, body: {
-  name: string;
-  price: number;
-  category?: string;
-  icon?: string;
-  color?: string;
-  type?: string;
-  bundle_items?: any[];
-}) {
-  const { data, error } = await this.supabase
-    .from('services')
-    .insert({
-      tenant_id: user.tenant_id,
-      name: body.name,
-      price: body.price,
-      category: body.category || null,
-      icon: body.icon || null,
-      color: body.color || null,
-      active: true,
-      type: body.type || 'single',
-      bundle_items: body.bundle_items || [],
-    })
-    .select()
-    .single()
+    name: string;
+    price: number;
+    category?: string;
+    icon?: string;
+    color?: string;
+    type?: string;
+    bundle_items?: any[];
+    image_url?: string;
+    cashier_price?: boolean;
+  }) {
+    const { data, error } = await this.supabase
+      .from('services')
+      .insert({
+        tenant_id: user.tenant_id,
+        name: body.name,
+        price: body.price,
+        category: body.category || null,
+        icon: body.icon || null,
+        color: body.color || null,
+        active: true,
+        type: body.type || 'single',
+        bundle_items: body.bundle_items || [],
+        image_url: body.image_url || null,
+        cashier_price: body.cashier_price ?? false,
+      })
+      .select()
+      .single();
 
-  if (error) throw new BadRequestException(error.message)
-  return data
-}
+    if (error) throw new BadRequestException(error.message);
+    return data;
+  }
 
   async updateService(user: any, id: string, body: {
     name?: string;
@@ -69,16 +71,33 @@ export class ServicesService {
     icon?: string;
     color?: string;
     active?: boolean;
+    type?: string;
+    bundle_items?: any[];
+    image_url?: string;
+    cashier_price?: boolean;
   }) {
+    const updateData: any = {};
+
+    if (body.name !== undefined)          updateData.name = body.name;
+    if (body.price !== undefined)         updateData.price = body.price;
+    if (body.category !== undefined)      updateData.category = body.category;
+    if (body.icon !== undefined)          updateData.icon = body.icon;
+    if (body.color !== undefined)         updateData.color = body.color;
+    if (body.active !== undefined)        updateData.active = body.active;
+    if (body.type !== undefined)          updateData.type = body.type;
+    if (body.bundle_items !== undefined)  updateData.bundle_items = body.bundle_items;
+    if (body.image_url !== undefined)     updateData.image_url = body.image_url;
+    if (body.cashier_price !== undefined) updateData.cashier_price = body.cashier_price;
+
     const { data, error } = await this.supabase
       .from('services')
-      .update(body)
+      .update(updateData)
       .eq('id', id)
       .eq('tenant_id', user.tenant_id)
       .select()
-      .single()
+      .single();
 
-    if (error) throw new BadRequestException(error.message)
+    if (error) throw new BadRequestException(error.message);
 
     await this.supabase.from('audit_logs').insert({
       tenant_id: user.tenant_id,
@@ -86,10 +105,10 @@ export class ServicesService {
       action: 'update_service',
       entity: 'services',
       entity_id: id,
-      details: body,
-    })
+      details: updateData,
+    });
 
-    return data
+    return data;
   }
 
   async deleteService(user: any, id: string) {
@@ -97,27 +116,25 @@ export class ServicesService {
       .from('services')
       .update({ active: false })
       .eq('id', id)
-      .eq('tenant_id', user.tenant_id)
+      .eq('tenant_id', user.tenant_id);
 
-    if (error) throw new BadRequestException(error.message)
-    return { message: 'تم تعطيل الخدمة' }
+    if (error) throw new BadRequestException(error.message);
+    return { message: 'تم تعطيل الخدمة' };
   }
 
   async hardDeleteService(user: any, id: string) {
-  // أولاً نحذف service_id من order_items
-  await this.supabase
-    .from('order_items')
-    .update({ service_id: null })
-    .eq('service_id', id)
+    await this.supabase
+      .from('order_items')
+      .update({ service_id: null })
+      .eq('service_id', id);
 
-  // ثم نحذف الخدمة
-  const { error } = await this.supabase
-    .from('services')
-    .delete()
-    .eq('id', id)
-    .eq('tenant_id', user.tenant_id)
+    const { error } = await this.supabase
+      .from('services')
+      .delete()
+      .eq('id', id)
+      .eq('tenant_id', user.tenant_id);
 
-  if (error) throw new BadRequestException(error.message)
-  return { message: 'تم الحذف النهائي' }
-}
+    if (error) throw new BadRequestException(error.message);
+    return { message: 'تم الحذف النهائي' };
+  }
 }
