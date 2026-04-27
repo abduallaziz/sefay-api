@@ -99,17 +99,17 @@ export class OrdersService {
   }
 
   async getOrdersByRange(user: any, from: string, to: string) {
-    const { data, error } = await this.supabase
-      .from('orders')
-      .select('*, order_items(*)')
-      .eq('tenant_id', user.tenant_id)
-      .gte('created_at', `${from}T00:00:00+03:00`)
-      .lte('created_at', `${to}T23:59:59+03:00`)
-      .order('created_at', { ascending: true })
+  const { data, error } = await this.supabase
+    .from('orders')
+    .select('*, order_items(*), customers(name, phone), vehicles(plate, type)')
+    .eq('tenant_id', user.tenant_id)
+    .gte('created_at', `${from}T00:00:00+03:00`)
+    .lte('created_at', `${to}T23:59:59+03:00`)
+    .order('created_at', { ascending: false })
 
-    if (error) throw new BadRequestException(error.message)
-    return data
-  }
+  if (error) throw new BadRequestException(error.message)
+  return data
+}
 
   async getSummaryByRange(user: any, from: string, to: string) {
     const { data: orders, error } = await this.supabase
