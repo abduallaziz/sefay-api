@@ -61,6 +61,39 @@ export class ExpensesService {
     return data
   }
 
+  async update(user: any, id: string, body: {
+  title?: string
+  amount?: number
+  category?: string
+  notes?: string
+  date?: string
+  recurring_type?: string
+  recurring_day?: number | null
+  has_vat?: boolean
+}) {
+  const updateData: any = {}
+  if (body.title !== undefined)          updateData.title = body.title
+  if (body.amount !== undefined)         updateData.amount = body.amount
+  if (body.category !== undefined)       updateData.category = body.category
+  if (body.notes !== undefined)          updateData.notes = body.notes
+  if (body.date !== undefined)           updateData.date = body.date
+  if (body.recurring_type !== undefined) updateData.recurring_type = body.recurring_type
+  if (body.recurring_day !== undefined)  updateData.recurring_day = body.recurring_day
+  if (body.has_vat !== undefined)        updateData.has_vat = body.has_vat
+
+  const { data, error } = await this.supabase
+    .from('expenses')
+    .update(updateData)
+    .eq('id', id)
+    .eq('tenant_id', user.tenant_id)
+    .select()
+    .single()
+
+  if (error) throw new BadRequestException(error.message)
+  return data
+}
+
+
   async delete(user: any, id: string) {
     const { error } = await this.supabase
       .from('expenses')
