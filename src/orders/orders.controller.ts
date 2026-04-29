@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { OrdersService } from './orders.service';
 
@@ -10,6 +10,15 @@ export class OrdersController {
   @Post()
   async createOrder(@Request() req: any, @Body() body: any) {
     return this.ordersService.createOrder(req.user, body);
+  }
+
+  @Patch(':id/refund')
+  async refundOrder(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() body: { mode: 'full' | 'partial'; refund_amount?: number },
+  ) {
+    return this.ordersService.refundOrder(req.user, id, body);
   }
 
   @Get()
