@@ -38,13 +38,12 @@ export class OrdersService {
       throw new BadRequestException('لا توجد خدمات في الطلب');
     }
 
-    const subtotal  = body.items.reduce((sum, item) => sum + item.price * item.qty, 0);
-    const discount  = body.discount || 0;
-    const taxRate   = (body as any).tax_rate ?? 15;
-    const tax       = (subtotal - discount) * (taxRate / 100);
-    const total     = subtotal - discount + tax;
+    const subtotal = body.items.reduce((sum, item) => sum + item.price * item.qty, 0);
+    const discount = body.discount || 0;
+    const taxRate  = (body as any).tax_rate ?? 15;
+    const tax      = (subtotal - discount) * (taxRate / 100);
+    const total    = subtotal - discount + tax;
 
-    // حساب cash_amount و card_amount
     let cashAmount = 0;
     let cardAmount = 0;
 
@@ -63,22 +62,22 @@ export class OrdersService {
     const { data: order, error } = await this.supabase
       .from('orders')
       .insert({
-        tenant_id:      user.tenant_id,
-        branch_id:      user.branch_id,
-        cashier_id:     user.id,
-        customer_id:    body.customer_id || null,
-        vehicle_id:     body.vehicle_id  || null,
-        payment_method: body.payment_method === 'mixed' ? 'mixed' : body.payment_method,
+        tenant_id:       user.tenant_id,
+        branch_id:       user.branch_id,
+        cashier_id:      user.id,
+        customer_id:     body.customer_id || null,
+        vehicle_id:      body.vehicle_id  || null,
+        payment_method:  body.payment_method,
         discount,
-        coupon_code:    body.coupon_code || null,
-        notes:          body.notes       || null,
+        coupon_code:     body.coupon_code || null,
+        notes:           body.notes       || null,
         subtotal,
         tax,
         total,
-        cash_amount:    cashAmount,
-        card_amount:    cardAmount,
+        cash_amount:     cashAmount,
+        card_amount:     cardAmount,
         refunded_amount: 0,
-        status: 'completed',
+        status:          'completed',
       })
       .select()
       .single();
@@ -110,8 +109,8 @@ export class OrdersService {
   async refundOrder(user: any, orderId: string, body: {
     mode: 'full' | 'partial';
     refund_amount?: number;
+    items?: { service_name: string; price: number; qty: number }[];
   }) {
-    // جلب الطلب
     const { data: order, error: fetchErr } = await this.supabase
       .from('orders')
       .select('*')
@@ -142,6 +141,7 @@ export class OrdersService {
     const newRefunded  = alreadyRefunded + refundAmount;
     const isFullRefund = newRefunded >= Number(order.total) - 0.01;
 
+    // تحديث الطلب
     const { error: updateErr } = await this.supabase
       .from('orders')
       .update({
@@ -153,13 +153,22 @@ export class OrdersService {
 
     if (updateErr) throw new BadRequestException(updateErr.message);
 
+    // حفظ تفاصيل الاسترجاع
+    await this.supabase.from('order_refunds').insert({
+      order_id:      orderId,
+      tenant_id:     user.tenant_id,
+      refund_amount: refundAmount,
+      mode:          body.mode,
+      items:         body.items || null,
+    });
+
     await this.supabase.from('audit_logs').insert({
       tenant_id: user.tenant_id,
       user_id:   user.id,
       action:    'refund_order',
       entity:    'orders',
       entity_id: orderId,
-      details:   { refund_amount: refundAmount, mode: body.mode },
+      details:   { refund_amount: refundAmount, mode: body.mode, items: body.items },
     });
 
     return {
@@ -173,7 +182,7 @@ export class OrdersService {
   async getOrders(user: any, date?: string) {
     let query = this.supabase
       .from('orders')
-      .select('*, order_items(*), customers(name, phone)')
+      .select('*, order_items(*), customers(name, phone), order_refunds(*)')
       .eq('tenant_id', user.tenant_id)
       .order('created_at', { ascending: false });
 
@@ -195,7 +204,7 @@ export class OrdersService {
   async getOrdersByRange(user: any, from: string, to: string) {
     let query = this.supabase
       .from('orders')
-      .select('*, order_items(*), customers(name, phone), vehicles(plate, type)')
+      .select('*, order_items(*), customers(name, phone), vehicles(plate, type), order_refunds(*)')
       .eq('tenant_id', user.tenant_id)
       .gte('created_at', `${from}T00:00:00+03:00`)
       .lte('created_at', `${to}T23:59:59+03:00`)
