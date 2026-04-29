@@ -38,6 +38,7 @@ export class ExpensesService {
     date: string
     recurring_type?: string
     recurring_day?: number | null
+    has_vat?: boolean
   }) {
     const { data, error } = await this.supabase
       .from('expenses')
@@ -51,6 +52,7 @@ export class ExpensesService {
         date: body.date,
         recurring_type: body.recurring_type || 'none',
         recurring_day: body.recurring_day || null,
+        has_vat: body.has_vat ?? false,
       })
       .select()
       .single()
@@ -69,4 +71,4 @@ export class ExpensesService {
     if (error) throw new BadRequestException(error.message)
     return { message: 'تم الحذف' }
   }
-} 
+}
