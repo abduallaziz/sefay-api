@@ -9,7 +9,7 @@ import { CustomersModule } from './customers/customers.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CouponsModule } from './coupons/coupons.module';
-
+import { ExpensesModule } from './expenses/expenses.module';
 
 @Module({
   imports: [
@@ -21,6 +21,7 @@ import { CouponsModule } from './coupons/coupons.module';
     ServicesModule,
     ShiftsModule,
     CustomersModule,
+    ExpensesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

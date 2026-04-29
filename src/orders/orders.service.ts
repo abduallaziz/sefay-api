@@ -2,6 +2,12 @@ import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { SUPABASE_CLIENT } from '../supabase/supabase.module';
 import { SupabaseClient } from '@supabase/supabase-js';
 
+const FULL_ACCESS_ROLES = ['superadmin', 'owner', 'manager']
+
+function canSeeAll(user: any): boolean {
+  return FULL_ACCESS_ROLES.includes(user.role)
+}
+
 function groupByDay(orders: any[]) {
   const map: Record<string, number> = {}
   orders.forEach(o => {
@@ -45,7 +51,7 @@ export class OrdersService {
         customer_id: body.customer_id || null,
         vehicle_id: body.vehicle_id || null,
         payment_method: body.payment_method,
-        discount: discount,
+        discount,
         coupon_code: body.coupon_code || null,
         notes: body.notes || null,
         subtotal,
@@ -85,12 +91,17 @@ export class OrdersService {
       .from('orders')
       .select('*, order_items(*), customers(name, phone)')
       .eq('tenant_id', user.tenant_id)
-      .eq('branch_id', user.branch_id)
       .order('created_at', { ascending: false });
 
+    // فلتر الفرع
+    if (!canSeeAll(user)) {
+      query = query.eq('branch_id', user.branch_id)
+    }
+
     if (date) {
-      query = query.gte('created_at', `${date}T00:00:00+03:00`)
-                   .lte('created_at', `${date}T23:59:59+03:00`)
+      query = query
+        .gte('created_at', `${date}T00:00:00+03:00`)
+        .lte('created_at', `${date}T23:59:59+03:00`)
     }
 
     const { data, error } = await query;
@@ -99,20 +110,25 @@ export class OrdersService {
   }
 
   async getOrdersByRange(user: any, from: string, to: string) {
-  const { data, error } = await this.supabase
-    .from('orders')
-    .select('*, order_items(*), customers(name, phone), vehicles(plate, type)')
-    .eq('tenant_id', user.tenant_id)
-    .gte('created_at', `${from}T00:00:00+03:00`)
-    .lte('created_at', `${to}T23:59:59+03:00`)
-    .order('created_at', { ascending: false })
+    let query = this.supabase
+      .from('orders')
+      .select('*, order_items(*), customers(name, phone), vehicles(plate, type)')
+      .eq('tenant_id', user.tenant_id)
+      .gte('created_at', `${from}T00:00:00+03:00`)
+      .lte('created_at', `${to}T23:59:59+03:00`)
+      .order('created_at', { ascending: false })
 
-  if (error) throw new BadRequestException(error.message)
-  return data
-}
+    if (!canSeeAll(user)) {
+      query = query.eq('branch_id', user.branch_id)
+    }
+
+    const { data, error } = await query;
+    if (error) throw new BadRequestException(error.message);
+    return data;
+  }
 
   async getSummaryByRange(user: any, from: string, to: string) {
-    const { data: orders, error } = await this.supabase
+    let query = this.supabase
       .from('orders')
       .select('*')
       .eq('tenant_id', user.tenant_id)
@@ -120,7 +136,12 @@ export class OrdersService {
       .gte('created_at', `${from}T00:00:00+03:00`)
       .lte('created_at', `${to}T23:59:59+03:00`)
 
-    if (error) throw new BadRequestException(error.message)
+    if (!canSeeAll(user)) {
+      query = query.eq('branch_id', user.branch_id)
+    }
+
+    const { data: orders, error } = await query;
+    if (error) throw new BadRequestException(error.message);
 
     return {
       total_orders:   orders.length,
@@ -134,15 +155,19 @@ export class OrdersService {
   }
 
   async getDailySummary(user: any, date: string) {
-    const { data: orders, error } = await this.supabase
+    let query = this.supabase
       .from('orders')
       .select('*')
       .eq('tenant_id', user.tenant_id)
-      .eq('branch_id', user.branch_id)
       .eq('status', 'completed')
       .gte('created_at', `${date}T00:00:00+03:00`)
-      .lte('created_at', `${date}T23:59:59+03:00`);
+      .lte('created_at', `${date}T23:59:59+03:00`)
 
+    if (!canSeeAll(user)) {
+      query = query.eq('branch_id', user.branch_id)
+    }
+
+    const { data: orders, error } = await query;
     if (error) throw new BadRequestException(error.message);
 
     return {
