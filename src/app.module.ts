@@ -1,29 +1,39 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { SupabaseModule } from './supabase/supabase.module';
-import { AuthModule } from './auth/auth.module';
-import { OrdersModule } from './orders/orders.module';
-import { ServicesModule } from './services/services.module';
-import { ShiftsModule } from './shifts/shifts.module';
-import { CustomersModule } from './customers/customers.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { CouponsModule } from './coupons/coupons.module';
-import { ExpensesModule } from './expenses/expenses.module';
+import { Module } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
+import { APP_GUARD } from '@nestjs/core'
+import { AuthGuard } from '@nestjs/passport'
+import { SupabaseModule } from './supabase/supabase.module'
+import { AuthModule } from './auth/auth.module'
+import { OrdersModule } from './orders/orders.module'
+import { ServicesModule } from './services/services.module'
+import { ShiftsModule } from './shifts/shifts.module'
+import { CustomersModule } from './customers/customers.module'
+import { CouponsModule } from './coupons/coupons.module'
+import { ExpensesModule } from './expenses/expenses.module'
+import { AppController } from './app.controller'
+import { AppService } from './app.service'
+import { OnboardingGuard } from './guards/onboarding.guard'
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     SupabaseModule,
-    CouponsModule,
     AuthModule,
     OrdersModule,
     ServicesModule,
     ShiftsModule,
     CustomersModule,
+    CouponsModule,
     ExpensesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // الترتيب مهم: JWT أولاً → Onboarding ثانياً
+    {
+      provide:  APP_GUARD,
+      useClass: OnboardingGuard,
+    },
+  ],
 })
 export class AppModule {}
