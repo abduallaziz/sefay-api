@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
-import { AuthGuard } from '@nestjs/passport'
 import { SupabaseModule } from './supabase/supabase.module'
 import { AuthModule } from './auth/auth.module'
 import { OrdersModule } from './orders/orders.module'
@@ -12,6 +11,7 @@ import { CouponsModule } from './coupons/coupons.module'
 import { ExpensesModule } from './expenses/expenses.module'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
+import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { OnboardingGuard } from './guards/onboarding.guard'
 
 @Module({
@@ -30,10 +30,8 @@ import { OnboardingGuard } from './guards/onboarding.guard'
   providers: [
     AppService,
     // الترتيب مهم: JWT أولاً → Onboarding ثانياً
-    {
-      provide:  APP_GUARD,
-      useClass: OnboardingGuard,
-    },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: OnboardingGuard },
   ],
 })
 export class AppModule {}
