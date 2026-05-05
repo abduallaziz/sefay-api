@@ -4,7 +4,7 @@ import { APP_GUARD } from '@nestjs/core'
 import { SupabaseModule } from './supabase/supabase.module'
 import { AuthModule } from './auth/auth.module'
 import { OrdersModule } from './orders/orders.module'
-import { ServicesModule } from './services/services.module'
+import { ItemsModule } from './items/items.module'
 import { ShiftsModule } from './shifts/shifts.module'
 import { CustomersModule } from './customers/customers.module'
 import { CouponsModule } from './coupons/coupons.module'
@@ -20,7 +20,7 @@ import { OnboardingGuard } from './guards/onboarding.guard'
     SupabaseModule,
     AuthModule,
     OrdersModule,
-    ServicesModule,
+    ItemsModule,
     ShiftsModule,
     CustomersModule,
     CouponsModule,

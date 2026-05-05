@@ -3,14 +3,14 @@ import { SUPABASE_CLIENT } from '../supabase/supabase.module';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
-export class ServicesService {
+export class ItemsService {
   constructor(
     @Inject(SUPABASE_CLIENT) private supabase: SupabaseClient,
   ) {}
 
-  async getServices(user: any) {
+  async getItems(user: any) {
     const { data, error } = await this.supabase
-      .from('services')
+      .from('items')
       .select('*')
       .eq('tenant_id', user.tenant_id)
       .eq('active', true)
@@ -20,9 +20,9 @@ export class ServicesService {
     return data;
   }
 
-  async getAllServices(user: any) {
+  async getAllItems(user: any) {
     const { data, error } = await this.supabase
-      .from('services')
+      .from('items')
       .select('*')
       .eq('tenant_id', user.tenant_id)
       .order('category', { ascending: true });
@@ -31,7 +31,7 @@ export class ServicesService {
     return data;
   }
 
-  async createService(user: any, body: {
+  async createItem(user: any, body: {
     name: string;
     price: number;
     category?: string;
@@ -43,7 +43,7 @@ export class ServicesService {
     cashier_price?: boolean;
   }) {
     const { data, error } = await this.supabase
-      .from('services')
+      .from('items')
       .insert({
         tenant_id: user.tenant_id,
         name: body.name,
@@ -64,7 +64,7 @@ export class ServicesService {
     return data;
   }
 
-  async updateService(user: any, id: string, body: {
+  async updateItem(user: any, id: string, body: {
     name?: string;
     price?: number;
     category?: string;
@@ -90,7 +90,7 @@ export class ServicesService {
     if (body.cashier_price !== undefined) updateData.cashier_price = body.cashier_price;
 
     const { data, error } = await this.supabase
-      .from('services')
+      .from('items')
       .update(updateData)
       .eq('id', id)
       .eq('tenant_id', user.tenant_id)
@@ -102,8 +102,8 @@ export class ServicesService {
     await this.supabase.from('audit_logs').insert({
       tenant_id: user.tenant_id,
       user_id: user.id,
-      action: 'update_service',
-      entity: 'services',
+      action: 'update_item',
+      entity: 'items',
       entity_id: id,
       details: updateData,
     });
@@ -111,9 +111,9 @@ export class ServicesService {
     return data;
   }
 
-  async deleteService(user: any, id: string) {
+  async deleteItem(user: any, id: string) {
     const { error } = await this.supabase
-      .from('services')
+      .from('items')
       .update({ active: false })
       .eq('id', id)
       .eq('tenant_id', user.tenant_id);
@@ -122,14 +122,14 @@ export class ServicesService {
     return { message: 'تم تعطيل الخدمة' };
   }
 
-  async hardDeleteService(user: any, id: string) {
+  async hardDeleteItem(user: any, id: string) {
     await this.supabase
       .from('order_items')
-      .update({ service_id: null })
-      .eq('service_id', id);
+      .update({ item_id: null })
+      .eq('item_id', id);
 
     const { error } = await this.supabase
-      .from('services')
+      .from('items')
       .delete()
       .eq('id', id)
       .eq('tenant_id', user.tenant_id);
