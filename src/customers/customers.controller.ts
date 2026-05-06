@@ -7,22 +7,26 @@ import { CustomersService } from './customers.service';
 export class CustomersController {
   constructor(private customersService: CustomersService) {}
 
+  // بحث ديناميكي
   @Get('search')
-  async search(@Query('plate') plate: string, @Query('tenant_id') tenant_id: string) {
-    return this.customersService.searchByPlate(plate, tenant_id);
+  async search(
+    @Query('q') q: string,
+    @Request() req: any,
+  ) {
+    return this.customersService.search(q, req.user.tenant_id)
   }
 
-  @Post('create')
-  async create(@Request() req: any, @Body() body: { plate: string; phone: string }) {
-    return this.customersService.createCustomerWithVehicle(
-      req.user.tenant_id,
-      body.plate,
-      body.phone,
-    );
+  // إنشاء أو إيجاد عميل
+  @Post()
+  async createOrFind(
+    @Request() req: any,
+    @Body() body: { phone?: string; name?: string; plate?: string },
+  ) {
+    return this.customersService.createOrFind(req.user.tenant_id, body)
   }
+
   @Get()
-async getAll(@Request() req: any) {
-  return this.customersService.getAll(req.user.tenant_id);
-}
-
+  async getAll(@Request() req: any) {
+    return this.customersService.getAll(req.user.tenant_id)
+  }
 }

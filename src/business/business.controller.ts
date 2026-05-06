@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Put, Body, UseGuards, Request, Patch, ForbiddenException } from '@nestjs/common';
 import { BusinessService } from './business.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { Capability } from '../common/enums';
@@ -43,4 +43,18 @@ export class BusinessController {
   ) {
     return this.businessService.updateConfig(req.user.tenant_id, capabilities);
   }
+
+
+
+
+
+  @Get('pos-config')
+async getPosConfig(@Request() req: any) {
+  return this.businessService.getPosConfig(req.user.tenant_id)
+}
+
+@Patch('pos-config')
+async updatePosConfig(@Request() req: any, @Body() body: any) {
+  return this.businessService.updatePosConfig(req.user.tenant_id, body)
+}
 }

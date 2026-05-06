@@ -103,4 +103,39 @@ export class BusinessService {
 
     return { ...data, planDetails: plan };
   }
+
+
+
+  async getPosConfig(businessId: string) {
+  const { data } = await this.supabase
+    .from('business_config')
+    .select('pos_customer_fields')
+    .eq('business_id', businessId)
+    .single()
+
+  // القيم الافتراضية
+  return data?.pos_customer_fields || {
+    name:  'optional',
+    phone: 'optional',
+    plate: 'optional',
+  }
+}
+
+async updatePosConfig(businessId: string, fields: {
+  name?:  'required' | 'optional' | 'hidden'
+  phone?: 'required' | 'optional' | 'hidden'
+  plate?: 'required' | 'optional' | 'hidden'
+}) {
+  const { data, error } = await this.supabase
+    .from('business_config')
+    .upsert({
+      business_id:         businessId,
+      pos_customer_fields: fields,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
 }
