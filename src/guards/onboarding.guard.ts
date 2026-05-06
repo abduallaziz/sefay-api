@@ -53,7 +53,7 @@ export class OnboardingGuard implements CanActivate {
     // 5. Onboarding check
     const { data: tenant, error } = await this.supabase
       .from('tenants')
-      .select('onboarded, id')
+      .select('onboarded, id, trial_ends_at, plan')
       .eq('id', tenantId)
       .single()
 
@@ -70,6 +70,14 @@ export class OnboardingGuard implements CanActivate {
       throw new ForbiddenException('Onboarding required')
     }
 
+    // Trial check
+    if (tenant.plan === 'trial' && tenant.trial_ends_at) {
+      const trialEnd = new Date(tenant.trial_ends_at)
+      if (trialEnd < new Date()) {
+        throw new ForbiddenException('Trial expired')
+      }
+    }
+
     return true
-  }
+}
 }

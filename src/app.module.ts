@@ -13,6 +13,7 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { OnboardingGuard } from './guards/onboarding.guard'
+import { BusinessModule } from './business/business.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { OnboardingGuard } from './guards/onboarding.guard'
     CustomersModule,
     CouponsModule,
     ExpensesModule,
+    BusinessModule,
   ],
   controllers: [AppController],
   providers: [

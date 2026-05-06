@@ -25,14 +25,14 @@ export class OrdersService {
 
   async createOrder(user: any, body: {
     customer_id?: string;
-    vehicle_id?: string;
     payment_method: string;
     cash_amount?: number;
     card_amount?: number;
     discount?: number;
     coupon_code?: string;
     notes?: string;
-    items: { service_id: string; service_name: string; price: number; qty: number }[];
+    items: { item_id: string; item_name: string; price: number; qty: number }[];
+
   }) {
     if (!body.items || body.items.length === 0) {
       throw new BadRequestException('لا توجد خدمات في الطلب');
@@ -66,7 +66,6 @@ export class OrdersService {
         branch_id:       user.branch_id,
         cashier_id:      user.id,
         customer_id:     body.customer_id || null,
-        vehicle_id:      body.vehicle_id  || null,
         payment_method:  body.payment_method,
         discount,
         coupon_code:     body.coupon_code || null,
@@ -85,11 +84,11 @@ export class OrdersService {
     if (error) throw new BadRequestException(error.message);
 
     const items = body.items.map(item => ({
-      order_id:     order.id,
-      service_id:   item.service_id,
-      service_name: item.service_name,
-      price:        item.price,
-      qty:          item.qty,
+      order_id:  order.id,
+      item_id:   item.item_id,
+      item_name: item.item_name,
+      price:     item.price,
+      qty:       item.qty,
     }));
 
     await this.supabase.from('order_items').insert(items);
