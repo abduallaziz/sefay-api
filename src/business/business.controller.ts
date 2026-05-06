@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Put, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { BusinessService } from './business.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { Capability } from '../common/enums';
@@ -30,6 +30,9 @@ export class BusinessController {
 
   @Put('upgrade')
   upgradePlan(@Request() req, @Body('planId') planId: string) {
+    if (req.user.role !== 'superadmin') {
+      throw new ForbiddenException('فقط السوبر أدمن يقدر يغير الخطة');
+    }
     return this.businessService.upgradePlan(req.user.tenant_id, planId);
   }
 
