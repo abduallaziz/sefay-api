@@ -62,7 +62,7 @@ export class CustomersService {
     name?:  string
     plate?: string
   }) {
-    let customer_id: string
+    let customer_id: string | undefined
     let vehicle_id:  string | null = null
 
     // ابحث عن عميل موجود
