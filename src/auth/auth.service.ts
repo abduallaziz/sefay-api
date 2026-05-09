@@ -79,9 +79,16 @@ export class AuthService {
       throw new UnauthorizedException('البريد الإلكتروني مستخدم مسبقاً');
     }
 
+    const trialEnd = new Date()
+    trialEnd.setDate(trialEnd.getDate() + 14)
+
     const { data: tenant, error: tenantError } = await this.supabase
       .from('tenants')
-      .insert({ name: body.name, plan: 'trial' })
+      .insert({
+        name: body.name,
+        plan: 'trial',
+        trial_ends_at: trialEnd.toISOString(),
+      })
       .select()
       .single();
 
