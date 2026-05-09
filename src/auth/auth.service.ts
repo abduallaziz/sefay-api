@@ -86,7 +86,7 @@ export class AuthService {
       .single();
 
     if (tenantError || !tenant) {
-      throw new UnauthorizedException('فشل إنشاء الحساب');
+      throw new UnauthorizedException(tenantError?.message || 'فشل إنشاء الحساب');
     }
 
     const password_hash = crypto
@@ -109,7 +109,7 @@ export class AuthService {
       .single();
 
     if (userError || !user) {
-      throw new UnauthorizedException('فشل إنشاء المستخدم');
+      throw new UnauthorizedException(userError?.message || 'فشل إنشاء المستخدم');
     }
 
     const payload = {
