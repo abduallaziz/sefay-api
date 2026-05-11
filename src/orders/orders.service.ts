@@ -31,8 +31,26 @@ export class OrdersService {
     discount?: number;
     coupon_code?: string;
     notes?: string;
-    items: { item_id: string; item_name: string; price: number; qty: number }[];
-
+    order_type?: string;
+    order_source?: string;
+    delivery_provider?: string;
+    external_order_id?: string;
+    customer_address?: string;
+    driver_name?: string;
+    driver_phone?: string;
+    items: {
+      item_id: string;
+      item_name: string;
+      price: number;
+      qty: number;
+      selected_options?: {
+        group_id: string;
+        group_name: string;
+        option_id: string;
+        option_name: string;
+        price_adjustment: number;
+      }[];
+    }[];
   }) {
     if (!body.items || body.items.length === 0) {
       throw new BadRequestException('لا توجد خدمات في الطلب');
@@ -59,31 +77,40 @@ export class OrdersService {
       cardAmount = total;
     }
 
+    // إنشاء الطلب
     const { data: order, error } = await this.supabase
       .from('orders')
       .insert({
-        tenant_id:       user.tenant_id,
-        branch_id:       user.branch_id,
-        cashier_id:      user.id,
-        customer_id:     body.customer_id || null,
-        payment_method:  body.payment_method,
+        tenant_id:         user.tenant_id,
+        branch_id:         user.branch_id,
+        cashier_id:        user.id,
+        customer_id:       body.customer_id      || null,
+        payment_method:    body.payment_method,
         discount,
-        coupon_code:     body.coupon_code || null,
-        notes:           body.notes       || null,
+        coupon_code:       body.coupon_code       || null,
+        notes:             body.notes             || null,
+        order_type:        body.order_type        || 'TAKEAWAY',
+        order_source:      body.order_source      || 'POS',
+        delivery_provider: body.delivery_provider || null,
+        external_order_id: body.external_order_id || null,
+        customer_address:  body.customer_address  || null,
+        driver_name:       body.driver_name       || null,
+        driver_phone:      body.driver_phone       || null,
         subtotal,
         tax,
         total,
-        cash_amount:     cashAmount,
-        card_amount:     cardAmount,
-        refunded_amount: 0,
-        status:          'completed',
+        cash_amount:       cashAmount,
+        card_amount:       cardAmount,
+        refunded_amount:   0,
+        status:            'completed',
       })
       .select()
       .single();
 
     if (error) throw new BadRequestException(error.message);
 
-    const items = body.items.map(item => ({
+    // إنشاء order_items
+    const orderItems = body.items.map(item => ({
       order_id:  order.id,
       item_id:   item.item_id,
       item_name: item.item_name,
@@ -91,7 +118,65 @@ export class OrdersService {
       qty:       item.qty,
     }));
 
-    await this.supabase.from('order_items').insert(items);
+    const { data: insertedItems, error: itemsError } = await this.supabase
+      .from('order_items')
+      .insert(orderItems)
+      .select();
+
+    if (itemsError) throw new BadRequestException(itemsError.message);
+
+    // حفظ selected_options + نقص المخزون
+    for (let i = 0; i < body.items.length; i++) {
+      const item        = body.items[i];
+      const insertedItem = insertedItems[i];
+
+      if (item.selected_options && item.selected_options.length > 0) {
+        // حفظ الخيارات المختارة
+        const optionsToInsert = item.selected_options.map(opt => ({
+          order_item_id:    insertedItem.id,
+          group_id:         opt.group_id,
+          group_name:       opt.group_name,
+          option_id:        opt.option_id,
+          option_name:      opt.option_name,
+          price_adjustment: opt.price_adjustment,
+        }));
+
+        await this.supabase
+          .from('order_item_selected_options')
+          .insert(optionsToInsert);
+
+        // نقص المخزون لكل option
+        for (const opt of item.selected_options) {
+          const { data: option } = await this.supabase
+            .from('item_variant_options')
+            .select('stock_quantity, item_id')
+            .eq('id', opt.option_id)
+            .single();
+
+          if (option && option.stock_quantity !== null) {
+            const before = Number(option.stock_quantity);
+            const after  = Math.max(0, before - item.qty);
+
+            await this.supabase
+              .from('item_variant_options')
+              .update({ stock_quantity: after })
+              .eq('id', opt.option_id);
+
+            await this.supabase.from('inventory_logs').insert({
+              tenant_id:         user.tenant_id,
+              item_id:           option.item_id,
+              variant_option_id: opt.option_id,
+              type:              'SALE',
+              quantity_change:   -item.qty,
+              quantity_before:   before,
+              quantity_after:    after,
+              reference_id:      order.id,
+              created_by:        user.id,
+            });
+          }
+        }
+      }
+    }
 
     await this.supabase.from('audit_logs').insert({
       tenant_id: user.tenant_id,
@@ -99,10 +184,10 @@ export class OrdersService {
       action:    'create_order',
       entity:    'orders',
       entity_id: order.id,
-      details:   { total, items_count: items.length },
+      details:   { total, items_count: orderItems.length },
     });
 
-    return { ...order, items };
+    return { ...order, items: insertedItems };
   }
 
   async refundOrder(user: any, orderId: string, body: {
@@ -140,7 +225,6 @@ export class OrdersService {
     const newRefunded  = alreadyRefunded + refundAmount;
     const isFullRefund = newRefunded >= Number(order.total) - 0.01;
 
-    // تحديث الطلب
     const { error: updateErr } = await this.supabase
       .from('orders')
       .update({
@@ -152,7 +236,6 @@ export class OrdersService {
 
     if (updateErr) throw new BadRequestException(updateErr.message);
 
-    // حفظ تفاصيل الاسترجاع
     await this.supabase.from('order_refunds').insert({
       order_id:      orderId,
       tenant_id:     user.tenant_id,
@@ -181,7 +264,7 @@ export class OrdersService {
   async getOrders(user: any, date?: string) {
     let query = this.supabase
       .from('orders')
-      .select('*, order_items(*), customers(name, phone), order_refunds(*)')
+      .select('*, order_items(*, order_item_selected_options(*)), customers(name, phone), order_refunds(*)')
       .eq('tenant_id', user.tenant_id)
       .order('created_at', { ascending: false });
 
@@ -203,7 +286,7 @@ export class OrdersService {
   async getOrdersByRange(user: any, from: string, to: string) {
     let query = this.supabase
       .from('orders')
-      .select('*, order_items(*), customers(name, phone), vehicles(plate, type), order_refunds(*)')
+      .select('*, order_items(*, order_item_selected_options(*)), customers(name, phone), order_refunds(*)')
       .eq('tenant_id', user.tenant_id)
       .gte('created_at', `${from}T00:00:00+03:00`)
       .lte('created_at', `${to}T23:59:59+03:00`)
