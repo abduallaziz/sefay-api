@@ -13,8 +13,15 @@ import { SupabaseClient } from '@supabase/supabase-js'
 export const SKIP_ONBOARDING_CHECK = 'skipOnboardingCheck'
 
 // Hard whitelist — لا يحتاج decorator
-const PUBLIC_PATHS = ['/auth/login', '/auth/register', '/auth/refresh', '/health']
-
+const PUBLIC_PATHS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/health',
+  '/business/trial',
+  '/business/plans',
+  '/business/current-plan',
+]
 @Injectable()
 export class OnboardingGuard implements CanActivate {
   constructor(
