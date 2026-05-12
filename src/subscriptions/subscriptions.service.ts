@@ -10,30 +10,36 @@ export class SubscriptionsService {
 
   // جيب الاشتراك الحالي للـ business
   async getCurrent(businessId: string) {
-    const { data, error } = await this.supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('tenant_id', businessId)
-      .eq('status', 'active')
-      .order('started_at', { ascending: false })
-      .limit(1)
-      .single();
+  const { data, error } = await this.supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('tenant_id', businessId)
+    .eq('status', 'active')
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-    if (error || !data) return null;
-    return data;
+  if (error) {
+    console.error('getCurrent error:', error);
+    return null;
   }
+  return data;
+}
 
   // جيب كل الاشتراكات (تاريخ)
   async getHistory(businessId: string) {
-    const { data, error } = await this.supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('tenant_id', businessId)
-      .order('started_at', { ascending: false });
+  const { data, error } = await this.supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('tenant_id', businessId)
+    .order('started_at', { ascending: false });
 
-    if (error) throw error;
-    return data;
+  if (error) {
+    console.error('getHistory error:', error);
+    return [];
   }
+  return data || [];
+}
 
   // أنشئ اشتراك جديد (superadmin فقط)
   async create(businessId: string, dto: {
