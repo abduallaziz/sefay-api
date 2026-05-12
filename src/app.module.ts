@@ -14,6 +14,7 @@ import { AppService } from './app.service'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { OnboardingGuard } from './guards/onboarding.guard'
 import { BusinessModule } from './business/business.module';
+import { AppointmentsModule } from './appointments/appointments.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { BusinessModule } from './business/business.module';
     AuthModule,
     OrdersModule,
     ItemsModule,
+    AppointmentsModule,
     ShiftsModule,
     CustomersModule,
     CouponsModule,
