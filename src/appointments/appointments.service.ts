@@ -84,8 +84,9 @@ export class AppointmentsService {
     const [endH, endM]     = avail.end_time.split(':').map(Number);
     const startMins = startH * 60 + startM;
     const endMins   = endH * 60 + endM;
+    const adjustedEnd = endMins === 0 ? 24 * 60 : endMins;
 
-    for (let m = startMins; m + 30 <= endMins; m += 30) {
+    for (let m = startMins; m + 30 <= adjustedEnd; m += 30) {
       const hh   = String(Math.floor(m / 60)).padStart(2, '0');
       const mm   = String(m % 60).padStart(2, '0');
       const slot = `${date}T${hh}:${mm}:00+03:00`;
