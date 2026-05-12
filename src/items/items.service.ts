@@ -35,12 +35,14 @@ export class ItemsService {
     name: string;
     price: number;
     category?: string;
+    category_id?: string;
     icon?: string;
     color?: string;
     type?: string;
     bundle_items?: any[];
     image_url?: string;
     cashier_price?: boolean;
+    duration?: number;
   }) {
     const { data, error } = await this.supabase
       .from('items')
@@ -49,6 +51,7 @@ export class ItemsService {
         name: body.name,
         price: body.price,
         category: body.category || null,
+        category_id: body.category_id || null,
         icon: body.icon || null,
         color: body.color || null,
         active: true,
@@ -56,6 +59,7 @@ export class ItemsService {
         bundle_items: body.bundle_items || [],
         image_url: body.image_url || null,
         cashier_price: body.cashier_price ?? false,
+        duration: body.duration ?? null,
       })
       .select()
       .single();
@@ -68,6 +72,7 @@ export class ItemsService {
     name?: string;
     price?: number;
     category?: string;
+    category_id?: string;
     icon?: string;
     color?: string;
     active?: boolean;
@@ -75,12 +80,14 @@ export class ItemsService {
     bundle_items?: any[];
     image_url?: string;
     cashier_price?: boolean;
+    duration?: number;
   }) {
     const updateData: any = {};
 
     if (body.name !== undefined)          updateData.name = body.name;
     if (body.price !== undefined)         updateData.price = body.price;
     if (body.category !== undefined)      updateData.category = body.category;
+    if (body.category_id !== undefined)   updateData.category_id = body.category_id;
     if (body.icon !== undefined)          updateData.icon = body.icon;
     if (body.color !== undefined)         updateData.color = body.color;
     if (body.active !== undefined)        updateData.active = body.active;
@@ -88,6 +95,7 @@ export class ItemsService {
     if (body.bundle_items !== undefined)  updateData.bundle_items = body.bundle_items;
     if (body.image_url !== undefined)     updateData.image_url = body.image_url;
     if (body.cashier_price !== undefined) updateData.cashier_price = body.cashier_price;
+    if (body.duration !== undefined)      updateData.duration = body.duration;
 
     const { data, error } = await this.supabase
       .from('items')
