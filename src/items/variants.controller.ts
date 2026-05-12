@@ -1,13 +1,22 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Body, Param, Request,
+  Body, Param, Request, UseGuards,
 } from '@nestjs/common';
 import { VariantsService } from './variants.service';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('items')
 export class VariantsController {
   constructor(private variantsService: VariantsService) {}
 
+  // ✅ Static routes FIRST
+  @Get('low-stock/alerts')
+  getLowStock(@Request() req: any) {
+    return this.variantsService.getLowStockItems(req.user);
+  }
+
+  // ✅ Dynamic routes AFTER
   @Get(':itemId/variants')
   getGroups(@Request() req: any, @Param('itemId') itemId: string) {
     return this.variantsService.getVariantGroups(req.user, itemId);
@@ -16,6 +25,11 @@ export class VariantsController {
   @Post(':itemId/variants')
   createGroup(@Request() req: any, @Param('itemId') itemId: string, @Body() body: any) {
     return this.variantsService.createVariantGroup(req.user, itemId, body);
+  }
+
+  @Get(':itemId/inventory-logs')
+  getLogs(@Request() req: any, @Param('itemId') itemId: string) {
+    return this.variantsService.getInventoryLogs(req.user, itemId);
   }
 
   @Put('variants/groups/:groupId')
@@ -46,15 +60,5 @@ export class VariantsController {
   @Post('variants/options/:optionId/stock')
   adjustStock(@Request() req: any, @Param('optionId') optionId: string, @Body() body: any) {
     return this.variantsService.adjustStock(req.user, optionId, body);
-  }
-
-  @Get(':itemId/inventory-logs')
-  getLogs(@Request() req: any, @Param('itemId') itemId: string) {
-    return this.variantsService.getInventoryLogs(req.user, itemId);
-  }
-
-  @Get('low-stock/alerts')
-  getLowStock(@Request() req: any) {
-    return this.variantsService.getLowStockItems(req.user);
   }
 }
