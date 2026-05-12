@@ -15,6 +15,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { OnboardingGuard } from './guards/onboarding.guard'
 import { BusinessModule } from './business/business.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { WorkersModule } from './workers/workers.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
     CouponsModule,
     ExpensesModule,
     BusinessModule,
+    WorkersModule,
   ],
   controllers: [AppController],
   providers: [
