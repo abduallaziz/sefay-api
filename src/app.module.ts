@@ -16,6 +16,7 @@ import { OnboardingGuard } from './guards/onboarding.guard'
 import { BusinessModule } from './business/business.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { WorkersModule } from './workers/workers.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { WorkersModule } from './workers/workers.module';
     ShiftsModule,
     CustomersModule,
     CouponsModule,
+    SubscriptionsModule,
     ExpensesModule,
     BusinessModule,
     WorkersModule,
