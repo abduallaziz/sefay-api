@@ -14,13 +14,13 @@ export class SubscriptionsController {
   // الاشتراك الحالي للـ business
   @Get('current')
   getCurrent(@Request() req: any) {
-    return this.service.getCurrent(req.user.businessId);
+    return this.service.getCurrent(req.user.tenant_id);
   }
 
   // تاريخ الاشتراكات
   @Get('history')
   getHistory(@Request() req: any) {
-    return this.service.getHistory(req.user.businessId);
+    return this.service.getHistory(req.user.tenant_id);
   }
 
   // إنشاء اشتراك — superadmin فقط
