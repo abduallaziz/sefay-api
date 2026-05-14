@@ -136,4 +136,7 @@ export class SuperAdminController {
   revokeSessions(@Param('id') id: string) {
     return this.service.revokeTenantSessions(id);
   }
+  // ─── REPORTS ─────────────────────────────────────────────────
+@Get('reports')
+getReports() { return this.service.getReports(); }
 }

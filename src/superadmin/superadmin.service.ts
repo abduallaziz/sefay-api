@@ -341,11 +341,96 @@ export class SuperAdminService {
     return data;
   }
 
+  async getReports() {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const in7Days  = new Date(Date.now() + 7  * 24 * 60 * 60 * 1000).toISOString();
+  const ago90    = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+
+  // MRR: مجموع الاشتراكات الشهرية النشطة
+  const { data: activeSubs } = await this.supabase
+    .from('subscriptions')
+    .select('price, billing_cycle')
+    .eq('status', 'active');
+
+  const mrr = (activeSubs || []).reduce((sum, s) => {
+    if (s.billing_cycle === 'monthly') return sum + Number(s.price);
+    if (s.billing_cycle === 'yearly')  return sum + Number(s.price) / 12;
+    return sum;
+  }, 0);
+
+  const arr = mrr * 12;
+
+  // إيرادات الشهر الحالي
+  const { data: monthPayments } = await this.supabase
+    .from('payments')
+    .select('amount')
+    .gte('created_at', startOfMonth);
+
+  const monthRevenue = (monthPayments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+
+  // Churn: اشتراكات أُلغيت هذا الشهر
+  const { data: churned } = await this.supabase
+    .from('subscriptions')
+    .select('id, tenant_id, cancelled_at, tenants(name)')
+    .eq('status', 'cancelled')
+    .gte('cancelled_at', startOfMonth);
+
+  // على وشك الانتهاء (خلال 30 يوم)
+  const { data: expiringSoon } = await this.supabase
+    .from('subscriptions')
+    .select('id, tenant_id, expires_at, plan, tenants(name, email)')
+    .eq('status', 'active')
+    .lte('expires_at', in30Days)
+    .gte('expires_at', now.toISOString())
+    .order('expires_at', { ascending: true });
+
+  // على وشك الانتهاء خلال 7 أيام فقط
+  const expiringCritical = (expiringSoon || []).filter(
+    s => new Date(s.expires_at) <= new Date(in7Days),
+  );
+
+  // Tenants غير نشطين (لم يسجلوا دخول آخر 90 يوم)
+  const { data: inactiveRaw } = await this.supabase
+    .from('tenants')
+    .select('id, name, email, last_login_at, status')
+    .eq('status', 'active')
+    .or(`last_login_at.lte.${ago90},last_login_at.is.null`);
+
+  // أكثر business types
+  const { data: bizTypes } = await this.supabase
+    .from('tenants')
+    .select('business_type')
+    .not('business_type', 'is', null);
+
+  const typeCounts: Record<string, number> = {};
+  (bizTypes || []).forEach(t => {
+    if (t.business_type) typeCounts[t.business_type] = (typeCounts[t.business_type] || 0) + 1;
+  });
+  const topBusinessTypes = Object.entries(typeCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([type, count]) => ({ type, count }));
+
+  return {
+    mrr:              Math.round(mrr),
+    arr:              Math.round(arr),
+    monthRevenue:     Math.round(monthRevenue),
+    churnCount:       (churned || []).length,
+    churned:          churned || [],
+    expiringSoon:     expiringSoon || [],
+    expiringCritical: expiringCritical.length,
+    inactive:         inactiveRaw || [],
+    topBusinessTypes,
+  };
+}
+
   async resetUserPassword(userId: string, newPassword: string) {
     const hashed = await bcrypt.hash(newPassword, 10);
     const { data, error } = await this.supabase
       .from('users')
-      .update({ password: hashed })
+      .update({ password_hash: hashed })
       .eq('id', userId)
       .select('id, name')
       .single();
