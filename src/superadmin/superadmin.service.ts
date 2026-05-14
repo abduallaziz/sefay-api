@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { SUPABASE_CLIENT } from '../supabase/supabase.module';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class SuperAdminService {
@@ -258,5 +259,108 @@ export class SuperAdminService {
       .single();
     if (error) throw error;
     return data;
+  }
+
+  // ─── PER-TENANT OVERRIDE ─────────────────────────────────────
+  async updateCapabilities(tenantId: string, dto: {
+    max_users?: number;
+    max_branches?: number;
+    capabilities?: Record<string, boolean>;
+  }) {
+    const payload: Record<string, any> = {};
+    if (dto.max_users    !== undefined) payload.max_users    = dto.max_users;
+    if (dto.max_branches !== undefined) payload.max_branches = dto.max_branches;
+    if (dto.capabilities !== undefined) payload.capabilities = dto.capabilities;
+
+    const { data, error } = await this.supabase
+      .from('tenants')
+      .update(payload)
+      .eq('id', tenantId)
+      .select('id, name, max_users, max_branches, capabilities')
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  // ─── AUTH CONTROL ─────────────────────────────────────────────
+  async getTenantUsers(tenantId: string) {
+    const { data, error } = await this.supabase
+      .from('users')
+      .select('id, name, email, phone, role, is_active, created_at')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  }
+
+  async addUserToTenant(tenantId: string, dto: {
+    name: string;
+    email: string;
+    phone?: string;
+    role: string;
+    password: string;
+  }) {
+    // hash password
+    const hashed = await bcrypt.hash(dto.password, 10);
+    const { data, error } = await this.supabase
+      .from('users')
+      .insert({
+        tenant_id:  tenantId,
+        name:       dto.name,
+        email:      dto.email,
+        phone:      dto.phone ?? null,
+        role:       dto.role,
+        password:   hashed,
+        is_active:  true,
+        created_at: new Date().toISOString(),
+      })
+      .select('id, name, email, role')
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async removeUser(userId: string) {
+    const { data, error } = await this.supabase
+      .from('users')
+      .update({ is_active: false })
+      .eq('id', userId)
+      .select('id, name, is_active')
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async changeUserRole(userId: string, role: string) {
+    const { data, error } = await this.supabase
+      .from('users')
+      .update({ role })
+      .eq('id', userId)
+      .select('id, name, role')
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async resetUserPassword(userId: string, newPassword: string) {
+    const hashed = await bcrypt.hash(newPassword, 10);
+    const { data, error } = await this.supabase
+      .from('users')
+      .update({ password: hashed })
+      .eq('id', userId)
+      .select('id, name')
+      .single();
+    if (error) throw error;
+    return { ...data, message: 'Password updated' };
+  }
+
+  async revokeTenantSessions(tenantId: string) {
+    // نحدث refresh_token لكل users الـ tenant = null
+    const { error } = await this.supabase
+      .from('users')
+      .update({ refresh_token: null })
+      .eq('tenant_id', tenantId);
+    if (error) throw error;
+    return { message: `All sessions revoked for tenant ${tenantId}` };
   }
 }

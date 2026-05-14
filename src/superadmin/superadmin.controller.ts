@@ -83,4 +83,57 @@ export class SuperAdminController {
   updatePlan(@Param('id') id: string, @Body() dto: any) {
     return this.service.updatePlan(id, dto);
   }
+
+  // ─── PER-TENANT OVERRIDE ─────────────────────────────────────
+  @Patch('tenants/:id/capabilities')
+  updateCapabilities(
+    @Param('id') id: string,
+    @Body() dto: {
+      max_users?: number;
+      max_branches?: number;
+      capabilities?: Record<string, boolean>;
+    },
+  ) { return this.service.updateCapabilities(id, dto); }
+
+  // ─── AUTH CONTROL ─────────────────────────────────────────────
+  @Get('tenants/:id/users')
+  getTenantUsers(@Param('id') id: string) {
+    return this.service.getTenantUsers(id);
+  }
+
+  @Post('tenants/:id/users')
+  addUser(
+    @Param('id') id: string,
+    @Body() dto: {
+      name: string;
+      email: string;
+      phone?: string;
+      role: string;
+      password: string;
+    },
+  ) { return this.service.addUserToTenant(id, dto); }
+
+  @Delete('users/:userId')
+  @HttpCode(200)
+  removeUser(@Param('userId') userId: string) {
+    return this.service.removeUser(userId);
+  }
+
+  @Patch('users/:userId/role')
+  changeRole(
+    @Param('userId') userId: string,
+    @Body('role') role: string,
+  ) { return this.service.changeUserRole(userId, role); }
+
+  @Patch('users/:userId/reset-password')
+  resetPassword(
+    @Param('userId') userId: string,
+    @Body('password') password: string,
+  ) { return this.service.resetUserPassword(userId, password); }
+
+  @Post('tenants/:id/revoke-sessions')
+  @HttpCode(200)
+  revokeSessions(@Param('id') id: string) {
+    return this.service.revokeTenantSessions(id);
+  }
 }
