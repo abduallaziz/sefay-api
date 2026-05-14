@@ -123,4 +123,48 @@ export class SuperAdminService {
     if (error) throw error;
     return data;
   }
+  async getOverview() {
+  const { count: totalTenants } = await this.supabase
+    .from('tenants')
+    .select('*', { count: 'exact', head: true });
+
+  const { count: activeTenants } = await this.supabase
+    .from('tenants')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'active');
+
+  const { count: trialTenants } = await this.supabase
+    .from('tenants')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'trial');
+
+  const { data: revenueData } = await this.supabase
+    .from('subscriptions')
+    .select('price')
+    .eq('status', 'active');
+
+  const totalRevenue = revenueData?.reduce((sum, s) => sum + (s.price || 0), 0) ?? 0;
+
+  // آخر 6 أشهر
+  const months: { month: string; count: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const from = new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
+    const to   = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString();
+
+    const { count } = await this.supabase
+      .from('tenants')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', from)
+      .lte('created_at', to);
+
+    months.push({
+      month: d.toLocaleString('ar-SA', { month: 'short' }),
+      count: count ?? 0,
+    });
+  }
+
+  return { totalTenants, activeTenants, trialTenants, totalRevenue, monthlyGrowth: months };
+}
 }

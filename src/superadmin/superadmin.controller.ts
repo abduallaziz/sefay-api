@@ -12,6 +12,12 @@ export class SuperAdminController {
 
   constructor(private readonly service: SuperAdminService) {}
 
+  // GET /superadmin/overview
+  @Get('overview')
+  getOverview() {
+    return this.service.getOverview();
+  }
+
   // GET /superadmin/tenants?search=&status=&plan=
   @Get('tenants')
   getTenants(
