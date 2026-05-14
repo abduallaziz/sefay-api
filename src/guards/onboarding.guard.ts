@@ -47,6 +47,8 @@ export class OnboardingGuard implements CanActivate {
 
     // 3. Auth enforcement — request.user يجب يكون موجود (JWT ran first)
     const user = request.user
+    // superadmin يتجاوز onboarding check
+    if (user?.role === 'superadmin') return true
     if (!user || !user.tenant_id) {
       throw new UnauthorizedException('Authentication required')
     }

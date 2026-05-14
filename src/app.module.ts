@@ -17,6 +17,7 @@ import { BusinessModule } from './business/business.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { WorkersModule } from './workers/workers.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { SuperAdminModule } from './superadmin/superadmin.module'
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     ExpensesModule,
     BusinessModule,
     WorkersModule,
+    SuperAdminModule,
   ],
   controllers: [AppController],
   providers: [
