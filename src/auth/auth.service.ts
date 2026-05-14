@@ -43,6 +43,14 @@ export class AuthService {
       permissions: user.permissions,
     };
 
+    // ── تحديث last_login_at للـ tenant ──
+    if (user.tenant_id) {
+      await this.supabase
+        .from('tenants')
+        .update({ last_login_at: new Date().toISOString() })
+        .eq('id', user.tenant_id);
+    }
+
     await this.supabase.from('audit_logs').insert({
       tenant_id: user.tenant_id,
       user_id: user.id,
