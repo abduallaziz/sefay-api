@@ -294,31 +294,30 @@ export class SuperAdminService {
   }
 
   async addUserToTenant(tenantId: string, dto: {
-    name: string;
-    email: string;
-    phone?: string;
-    role: string;
-    password: string;
-  }) {
-    // hash password
-    const hashed = await bcrypt.hash(dto.password, 10);
-    const { data, error } = await this.supabase
-      .from('users')
-      .insert({
-        tenant_id:  tenantId,
-        name:       dto.name,
-        email:      dto.email,
-        phone:      dto.phone ?? null,
-        role:       dto.role,
-        password:   hashed,
-        is_active:  true,
-        created_at: new Date().toISOString(),
-      })
-      .select('id, name, email, role')
-      .single();
-    if (error) throw error;
-    return data;
-  }
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  password: string;
+}) {
+  const hashed = await bcrypt.hash(dto.password, 10);
+  const { data, error } = await this.supabase
+    .from('users')
+    .insert({
+      tenant_id:     tenantId,
+      name:          dto.name,
+      email:         dto.email,
+      phone:         dto.phone ?? null,
+      role:          dto.role,
+      password_hash: hashed,
+      is_active:     true,
+      created_at:    new Date().toISOString(),
+    })
+    .select('id, name, email, role')
+    .single();
+  if (error) throw error;
+  return data;
+}
 
   async removeUser(userId: string) {
     const { data, error } = await this.supabase
