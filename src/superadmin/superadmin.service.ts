@@ -1,13 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { SupabaseService } from '../supabase/supabase.service';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { SUPABASE_CLIENT } from '../supabase/supabase.module';
 
 @Injectable()
 export class SuperAdminService {
-  constructor(private supabase: SupabaseService) {}
+  constructor(
+    @Inject(SUPABASE_CLIENT) private supabase: SupabaseClient,
+  ) {}
 
-  // ── List all tenants ──────────────────────────────────────────
   async getTenants(search?: string, status?: string, plan?: string) {
-    let query = this.supabase.client
+    let query = this.supabase
       .from('tenants')
       .select(`
         id, name, slug, plan, status, phone, email,
@@ -16,9 +18,7 @@ export class SuperAdminService {
       `)
       .order('created_at', { ascending: false });
 
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
-    }
+    if (search) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
     if (status) query = query.eq('status', status);
     if (plan)   query = query.eq('plan', plan);
 
@@ -27,9 +27,8 @@ export class SuperAdminService {
     return data;
   }
 
-  // ── Tenant details ────────────────────────────────────────────
   async getTenantById(id: string) {
-    const { data: tenant, error } = await this.supabase.client
+    const { data: tenant, error } = await this.supabase
       .from('tenants')
       .select('*')
       .eq('id', id)
@@ -37,7 +36,7 @@ export class SuperAdminService {
 
     if (error || !tenant) throw new NotFoundException('Tenant not found');
 
-    const { data: subscription } = await this.supabase.client
+    const { data: subscription } = await this.supabase
       .from('subscriptions')
       .select('*')
       .eq('tenant_id', id)
@@ -45,12 +44,12 @@ export class SuperAdminService {
       .limit(1)
       .single();
 
-    const { count: usersCount } = await this.supabase.client
+    const { count: usersCount } = await this.supabase
       .from('users')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', id);
 
-    const { count: branchesCount } = await this.supabase.client
+    const { count: branchesCount } = await this.supabase
       .from('branches')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', id);
@@ -58,7 +57,6 @@ export class SuperAdminService {
     return { ...tenant, subscription, usersCount, branchesCount };
   }
 
-  // ── Update tenant ─────────────────────────────────────────────
   async updateTenant(id: string, dto: Record<string, any>) {
     const allowed = ['name', 'phone', 'email', 'city', 'district',
                      'street', 'address', 'vat_number', 'tax_number',
@@ -68,7 +66,7 @@ export class SuperAdminService {
       if (dto[key] !== undefined) payload[key] = dto[key];
     }
 
-    const { data, error } = await this.supabase.client
+    const { data, error } = await this.supabase
       .from('tenants')
       .update(payload)
       .eq('id', id)
@@ -79,9 +77,8 @@ export class SuperAdminService {
     return data;
   }
 
-  // ── Toggle status (active / inactive) ────────────────────────
   async toggleTenantStatus(id: string, status: 'active' | 'inactive' | 'suspended') {
-    const { data, error } = await this.supabase.client
+    const { data, error } = await this.supabase
       .from('tenants')
       .update({ status })
       .eq('id', id)
@@ -92,9 +89,8 @@ export class SuperAdminService {
     return data;
   }
 
-  // ── Soft delete ───────────────────────────────────────────────
   async softDeleteTenant(id: string) {
-    const { data, error } = await this.supabase.client
+    const { data, error } = await this.supabase
       .from('tenants')
       .update({ status: 'deleted' })
       .eq('id', id)
@@ -105,9 +101,8 @@ export class SuperAdminService {
     return data;
   }
 
-  // ── Extend trial ──────────────────────────────────────────────
   async extendTrial(id: string, days: number) {
-    const { data: tenant, error: fetchError } = await this.supabase.client
+    const { data: tenant, error: fetchError } = await this.supabase
       .from('tenants')
       .select('trial_ends_at')
       .eq('id', id)
@@ -118,7 +113,7 @@ export class SuperAdminService {
     const base = tenant.trial_ends_at ? new Date(tenant.trial_ends_at) : new Date();
     base.setDate(base.getDate() + days);
 
-    const { data, error } = await this.supabase.client
+    const { data, error } = await this.supabase
       .from('tenants')
       .update({ trial_ends_at: base.toISOString() })
       .eq('id', id)
