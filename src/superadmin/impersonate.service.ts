@@ -11,13 +11,11 @@ export class ImpersonateService {
   ) {}
 
   async impersonate(tenantId: string) {
-    // جيب الـ owner لهذا الـ tenant
     const { data: user, error } = await this.supabase
       .from('users')
       .select('id, email, name, role, tenant_id, branch_id, permissions')
       .eq('tenant_id', tenantId)
       .eq('role', 'owner')
-      .eq('is_active', true)
       .single();
 
     if (error || !user) {
@@ -37,7 +35,7 @@ export class ImpersonateService {
       branch_id: user.branch_id,
       role: user.role,
       permissions: user.permissions,
-      impersonated: true, // علامة مهمة
+      impersonated: true,
     };
 
     return {
