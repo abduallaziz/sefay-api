@@ -3,16 +3,22 @@ import { SUPABASE_CLIENT } from '../supabase/supabase.module';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 const ALL_FEATURES = [
-  { key: 'appointments', label: 'المواعيد' },
   { key: 'pos', label: 'نقطة البيع' },
+  { key: 'appointments', label: 'المواعيد' },
   { key: 'orders', label: 'الطلبات' },
+  { key: 'items', label: 'المنتجات' },
+  { key: 'categories', label: 'الفئات' },
+  { key: 'customers', label: 'العملاء' },
+  { key: 'reports', label: 'التقارير' },
+  { key: 'branches', label: 'الفروع' },
   { key: 'employees', label: 'الموظفين' },
   { key: 'workers', label: 'فريق العمل' },
   { key: 'expenses', label: 'المصاريف' },
   { key: 'coupons', label: 'الكوبونات' },
-  { key: 'reports', label: 'التقارير' },
-  { key: 'branches', label: 'الفروع' },
   { key: 'sync', label: 'المزامنة' },
+  { key: 'upgrade', label: 'ترقية الخطة' },
+  { key: 'subscriptions', label: 'الاشتراكات' },
+  { key: 'settings', label: 'الإعدادات' },
 ];
 
 @Injectable()
