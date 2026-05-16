@@ -263,24 +263,26 @@ export class SuperAdminService {
 
   // ─── PER-TENANT OVERRIDE ─────────────────────────────────────
   async updateCapabilities(tenantId: string, dto: {
-    max_users?: number;
-    max_branches?: number;
-    capabilities?: Record<string, boolean>;
-  }) {
-    const payload: Record<string, any> = {};
-    if (dto.max_users    !== undefined) payload.max_users    = dto.max_users;
-    if (dto.max_branches !== undefined) payload.max_branches = dto.max_branches;
-    if (dto.capabilities !== undefined) payload.capabilities = dto.capabilities;
+  max_users?: number | null;
+  max_branches?: number | null;
+  max_invoices?: number | null;
+  capabilities?: Record<string, boolean>;
+}) {
+  const payload: Record<string, any> = {};
+  if (dto.max_users    !== undefined) payload.max_users    = dto.max_users;
+  if (dto.max_branches !== undefined) payload.max_branches = dto.max_branches;
+  if (dto.max_invoices !== undefined) payload.max_invoices = dto.max_invoices;
+  if (dto.capabilities !== undefined) payload.capabilities = dto.capabilities;
 
-    const { data, error } = await this.supabase
-      .from('tenants')
-      .update(payload)
-      .eq('id', tenantId)
-      .select('id, name, max_users, max_branches, capabilities')
-      .single();
-    if (error) throw error;
-    return data;
-  }
+  const { data, error } = await this.supabase
+    .from('tenants')
+    .update(payload)
+    .eq('id', tenantId)
+    .select('id, name, max_users, max_branches, max_invoices, capabilities')
+    .single();
+  if (error) throw error;
+  return data;
+}
 
   // ─── AUTH CONTROL ─────────────────────────────────────────────
   async getTenantUsers(tenantId: string) {
