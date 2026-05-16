@@ -3,22 +3,27 @@ import { SUPABASE_CLIENT } from '../supabase/supabase.module';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 const ALL_FEATURES = [
-  { key: 'pos', label: 'نقطة البيع' },
-  { key: 'appointments', label: 'المواعيد' },
-  { key: 'orders', label: 'الطلبات' },
-  { key: 'items', label: 'المنتجات' },
-  { key: 'categories', label: 'الفئات' },
-  { key: 'customers', label: 'العملاء' },
-  { key: 'reports', label: 'التقارير' },
-  { key: 'branches', label: 'الفروع' },
-  { key: 'employees', label: 'الموظفين' },
-  { key: 'workers', label: 'فريق العمل' },
-  { key: 'expenses', label: 'المصاريف' },
-  { key: 'coupons', label: 'الكوبونات' },
-  { key: 'sync', label: 'المزامنة' },
-  { key: 'upgrade', label: 'ترقية الخطة' },
-  { key: 'subscriptions', label: 'الاشتراكات' },
-  { key: 'settings', label: 'الإعدادات' },
+  // صفحات الداشبورد
+  { key: 'pos',           label: 'نقطة البيع',     group: 'صفحات' },
+  { key: 'appointments',  label: 'المواعيد',        group: 'صفحات' },
+  { key: 'orders',        label: 'الطلبات',         group: 'صفحات' },
+  { key: 'items',         label: 'المنتجات',        group: 'صفحات' },
+  { key: 'categories',    label: 'الفئات',          group: 'صفحات' },
+  { key: 'customers',     label: 'العملاء',         group: 'صفحات' },
+  { key: 'reports',       label: 'التقارير',        group: 'صفحات' },
+  { key: 'branches',      label: 'الفروع',          group: 'صفحات' },
+  { key: 'employees',     label: 'الموظفين',        group: 'صفحات' },
+  { key: 'workers',       label: 'فريق العمل',      group: 'صفحات' },
+  { key: 'expenses',      label: 'المصاريف',        group: 'صفحات' },
+  { key: 'coupons',       label: 'الكوبونات',       group: 'صفحات' },
+  { key: 'sync',          label: 'المزامنة',        group: 'صفحات' },
+  { key: 'subscriptions', label: 'الاشتراكات',      group: 'صفحات' },
+  { key: 'settings',      label: 'الإعدادات',       group: 'صفحات' },
+  // Capabilities
+  { key: 'INVENTORY',     label: 'المخزون',         group: 'capabilities' },
+  { key: 'APPOINTMENTS',  label: 'المواعيد (cap)',   group: 'capabilities' },
+  { key: 'VARIANTS',      label: 'أحجام/ألوان',     group: 'capabilities' },
+  { key: 'SUBSCRIPTIONS', label: 'اشتراكات (cap)',  group: 'capabilities' },
 ];
 
 @Injectable()
@@ -38,6 +43,7 @@ export class FeatureFlagsService {
     return ALL_FEATURES.map((feature) => ({
       feature: feature.key,
       label: feature.label,
+      group: feature.group,
       enabled: flagsMap.get(feature.key)?.enabled ?? false,
       note: flagsMap.get(feature.key)?.note ?? null,
     }));
