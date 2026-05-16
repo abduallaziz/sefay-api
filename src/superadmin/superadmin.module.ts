@@ -12,7 +12,12 @@ import { ImpersonateController } from './impersonate.controller';
 import { ImpersonateService } from './impersonate.service';
 
 @Module({
-  imports: [JwtModule],
+  imports: [
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '2h' },
+    }),
+  ],
   controllers: [
     SuperAdminController,
     NotificationsController,
