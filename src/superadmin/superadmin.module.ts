@@ -14,6 +14,8 @@ import { FeatureFlagsController } from './feature-flags.controller';
 import { FeatureFlagsService } from './feature-flags.service';
 import { AutomationController } from './automation.controller';
 import { AutomationService } from './automation.service';
+import { SecurityController } from './security.controller';
+import { SecurityService } from './security.service';
 
 @Module({
   imports: [
@@ -30,6 +32,7 @@ import { AutomationService } from './automation.service';
     ImpersonateController,
     FeatureFlagsController,
     AutomationController,
+    SecurityController,
   ],
   providers: [
     SuperAdminService,
@@ -39,6 +42,7 @@ import { AutomationService } from './automation.service';
     ImpersonateService,
     FeatureFlagsService,
     AutomationService,
+    SecurityService,
   ],
   exports: [AuditService],
 })
