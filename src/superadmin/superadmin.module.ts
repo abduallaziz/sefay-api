@@ -16,6 +16,10 @@ import { AutomationController } from './automation.controller';
 import { AutomationService } from './automation.service';
 import { SecurityController } from './security.controller';
 import { SecurityService } from './security.service';
+import { BackupController } from './backup.controller';
+import { BackupService } from './backup.service';
+import { SupportController } from './support.controller';
+import { SupportService } from './support.service';
 
 @Module({
   imports: [
@@ -33,6 +37,8 @@ import { SecurityService } from './security.service';
     FeatureFlagsController,
     AutomationController,
     SecurityController,
+    BackupController,
+    SupportController,
   ],
   providers: [
     SuperAdminService,
@@ -43,6 +49,8 @@ import { SecurityService } from './security.service';
     FeatureFlagsService,
     AutomationService,
     SecurityService,
+    BackupService,
+    SupportService,
   ],
   exports: [AuditService],
 })
