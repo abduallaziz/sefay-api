@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
+import { ScheduleModule } from '@nestjs/schedule'
 import { APP_GUARD } from '@nestjs/core'
 import { SupabaseModule } from './supabase/supabase.module'
 import { AuthModule } from './auth/auth.module'
@@ -13,15 +14,16 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { OnboardingGuard } from './guards/onboarding.guard'
-import { BusinessModule } from './business/business.module';
-import { AppointmentsModule } from './appointments/appointments.module';
-import { WorkersModule } from './workers/workers.module';
-import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { BusinessModule } from './business/business.module'
+import { AppointmentsModule } from './appointments/appointments.module'
+import { WorkersModule } from './workers/workers.module'
+import { SubscriptionsModule } from './subscriptions/subscriptions.module'
 import { SuperAdminModule } from './superadmin/superadmin.module'
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     SupabaseModule,
     AuthModule,
     OrdersModule,
@@ -39,7 +41,6 @@ import { SuperAdminModule } from './superadmin/superadmin.module'
   controllers: [AppController],
   providers: [
     AppService,
-    // الترتيب مهم: JWT أولاً → Onboarding ثانياً
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: OnboardingGuard },
   ],

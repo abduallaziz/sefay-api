@@ -12,6 +12,8 @@ import { ImpersonateController } from './impersonate.controller';
 import { ImpersonateService } from './impersonate.service';
 import { FeatureFlagsController } from './feature-flags.controller';
 import { FeatureFlagsService } from './feature-flags.service';
+import { AutomationController } from './automation.controller';
+import { AutomationService } from './automation.service';
 
 @Module({
   imports: [
@@ -27,6 +29,7 @@ import { FeatureFlagsService } from './feature-flags.service';
     CommunicationsController,
     ImpersonateController,
     FeatureFlagsController,
+    AutomationController,
   ],
   providers: [
     SuperAdminService,
@@ -35,6 +38,7 @@ import { FeatureFlagsService } from './feature-flags.service';
     CommunicationsService,
     ImpersonateService,
     FeatureFlagsService,
+    AutomationService,
   ],
   exports: [AuditService],
 })
