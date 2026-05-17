@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { ScheduleModule } from '@nestjs/schedule'
 import { APP_GUARD } from '@nestjs/core'
@@ -19,6 +19,7 @@ import { AppointmentsModule } from './appointments/appointments.module'
 import { WorkersModule } from './workers/workers.module'
 import { SubscriptionsModule } from './subscriptions/subscriptions.module'
 import { SuperAdminModule } from './superadmin/superadmin.module'
+import { ApiLoggerMiddleware } from './middleware/api-logger.middleware'
 
 @Module({
   imports: [
@@ -45,4 +46,8 @@ import { SuperAdminModule } from './superadmin/superadmin.module'
     { provide: APP_GUARD, useClass: OnboardingGuard },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(ApiLoggerMiddleware).forRoutes('*');
+  }
+}
