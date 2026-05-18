@@ -14,7 +14,6 @@ export class PlansService {
       .from('plans')
       .select(`*, plan_features(*)`)
       .order('sort_order', { ascending: true });
-
     if (error) throw error;
     return data;
   }
@@ -25,54 +24,40 @@ export class PlansService {
       .select(`*, plan_features(*)`)
       .eq('id', id)
       .single();
-
     if (error) throw error;
     return data;
   }
 
   async create(dto: CreatePlanDto) {
     const { features, ...planData } = dto;
-
     const { data: plan, error } = await this.supabase
       .from('plans')
       .insert({ ...planData, created_at: new Date().toISOString() })
       .select()
       .single();
-
     if (error) throw error;
-
     if (features?.length) {
       const { error: featError } = await this.supabase
         .from('plan_features')
         .insert(features.map(f => ({ ...f, plan_id: plan.id })));
-
       if (featError) throw featError;
     }
-
     return this.findOne(plan.id);
   }
 
   async update(id: string, dto: UpdatePlanDto) {
     const { features, ...planData } = dto;
-
     const { error } = await this.supabase
       .from('plans')
       .update({ ...planData, updated_at: new Date().toISOString() })
       .eq('id', id);
-
     if (error) throw error;
-
     if (features?.length) {
-      await this.supabase
-        .from('plan_features')
-        .delete()
-        .eq('plan_id', id);
-
+      await this.supabase.from('plan_features').delete().eq('plan_id', id);
       await this.supabase
         .from('plan_features')
         .insert(features.map(f => ({ ...f, plan_id: id })));
     }
-
     return this.findOne(id);
   }
 
@@ -81,8 +66,7 @@ export class PlansService {
       .from('plans')
       .update({ is_active: false })
       .eq('id', id);
-
     if (error) throw error;
     return { success: true };
   }
-  }
+}
