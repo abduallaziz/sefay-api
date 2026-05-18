@@ -20,6 +20,8 @@ import { BackupController } from './backup.controller';
 import { BackupService } from './backup.service';
 import { SupportController } from './support.controller';
 import { SupportService } from './support.service';
+import { PlansController } from './plans.controller';
+import { PlansService } from './plans.service';
 
 @Module({
   imports: [
@@ -39,6 +41,7 @@ import { SupportService } from './support.service';
     SecurityController,
     BackupController,
     SupportController,
+    PlansController
   ],
   providers: [
     SuperAdminService,
@@ -51,6 +54,7 @@ import { SupportService } from './support.service';
     SecurityService,
     BackupService,
     SupportService,
+    PlansService,
   ],
   exports: [AuditService],
 })
