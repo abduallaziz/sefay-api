@@ -75,14 +75,7 @@ export class SuperAdminController {
     return this.service.addManualPayment(dto);
   }
 
-  // ─── PLANS ───────────────────────────────────────────────────
-  @Get('plans')
-  getPlans() { return this.service.getPlans(); }
-
-  @Patch('plans/:id')
-  updatePlan(@Param('id') id: string, @Body() dto: any) {
-    return this.service.updatePlan(id, dto);
-  }
+ 
 
   // ─── PER-TENANT OVERRIDE ─────────────────────────────────────
   @Patch('tenants/:id/capabilities')
